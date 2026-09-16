@@ -2,7 +2,9 @@
 
 按 **语言 → 考试 → 练习方式** 组织的官方水平考试练习平台。支持完整试卷、专项练习、模拟组卷；听力题可播放/暂停；可离线作答。
 
-> 本机路径说明见 [WHERE_IS_THE_CODE.md](./WHERE_IS_THE_CODE.md)。仓库：https://cursor.com/codebase/neilyao/lang-test-vault
+> 本机路径说明见 [WHERE_IS_THE_CODE.md](./WHERE_IS_THE_CODE.md)。  
+> GitHub：https://github.com/yao1431a/language-exam  
+> Cursor 备份：https://cursor.com/codebase/neilyao/lang-test-vault
 
 ## 信息架构
 
@@ -31,4 +33,5 @@ npm run dev
 
 - `v1.0.0-initial-release`
 - `v1.1.0-open-api-enrich`
-- `v1.2.0-ia-listening-practice`（本版）
+- `v1.2.0-ia-listening-practice`
+- `v1.3.0-stability-random-bank`（本版：修复访问/听力，专项随机出题与题库扩充）
