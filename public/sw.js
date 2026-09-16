@@ -1,5 +1,5 @@
-const CACHE_NAME = "language-exam-v1";
-const STATIC_ASSETS = ["/", "/manifest.json"];
+const CACHE_NAME = "language-exam-v2";
+const STATIC_ASSETS = ["/manifest.json"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -19,18 +19,35 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-
   if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  // Never cache API / HTML navigations — stale shells caused "access broken" after updates.
+  const isDocument =
+    request.mode === "navigate" ||
+    request.destination === "document" ||
+    url.pathname.startsWith("/api/");
+
+  if (isDocument) {
+    event.respondWith(
+      fetch(request).catch(() =>
+        caches.match(request).then((cached) => cached || Response.error()),
+      ),
+    );
+    return;
+  }
 
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (response.ok && request.url.startsWith(self.location.origin)) {
+        if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
       })
-      .catch(() => caches.match(request).then((cached) => cached || caches.match("/"))),
+      .catch(() => caches.match(request).then((cached) => cached || Response.error())),
   );
 });

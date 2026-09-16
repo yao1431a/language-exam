@@ -32,7 +32,7 @@ export default function PracticeSkillPage() {
     setLoading(true);
     setError(undefined);
     try {
-      const paper = generatePracticePaper(examType, skill, 10);
+      const paper = generatePracticePaper(examType, skill, 12);
       await upsertPaper(paper);
       router.push(`/exam/${examType}/${paper.id}`);
     } catch (err) {
@@ -70,7 +70,7 @@ export default function PracticeSkillPage() {
 
         <div className="mt-8 rounded-3xl border border-[color:var(--line)] bg-white/90 p-6">
           <ul className="space-y-2 text-sm leading-7 text-[color:var(--muted)]">
-            <li>· 约 10 题，聚焦 {skillLabel}</li>
+            <li>· 约 12 题，每次随机抽题，聚焦 {skillLabel}</li>
             <li>· 听力专项含播放 / 暂停控件</li>
             <li>· 结果保存到本地，可随时回看</li>
           </ul>

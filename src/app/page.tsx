@@ -6,7 +6,6 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SyncStatusBar } from "@/components/SyncStatusBar";
 import { LANGUAGES } from "@/lib/exams/catalog";
 import {
-  ensureSeedData,
   getSetting,
   setSetting,
   upsertPaper,
@@ -19,7 +18,6 @@ export default function HomePage() {
   const [syncMessage, setSyncMessage] = useState<string>();
 
   useEffect(() => {
-    ensureSeedData();
     getSetting("lastSyncedAt").then((value) => {
       if (value) setLastSyncedAt(value);
     });

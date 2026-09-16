@@ -53,7 +53,7 @@ function distractors(words: JlptVocabWord[], correct: JlptVocabWord, count = 3):
     .map((w) => w.meaning.split(";")[0].trim());
 }
 
-export function vocabToQuestions(words: JlptVocabWord[], limit = 40): BankEntry[] {
+export function vocabToQuestions(words: JlptVocabWord[], limit = 100): BankEntry[] {
   const usable = words.filter((w) => w.word && w.meaning);
   const pool = shuffle(usable).slice(0, limit);
 
@@ -113,7 +113,7 @@ export function vocabToQuestions(words: JlptVocabWord[], limit = 40): BankEntry[
   });
 }
 
-export function grammarToQuestions(items: JlptGrammarItem[], limit = 20): BankEntry[] {
+export function grammarToQuestions(items: JlptGrammarItem[], limit = 40): BankEntry[] {
   return shuffle(items)
     .slice(0, limit)
     .map((item) => {
@@ -131,11 +131,11 @@ export function grammarToQuestions(items: JlptGrammarItem[], limit = 20): BankEn
     });
 }
 
-export async function fetchJlptVocab(level: number, limit = 80): Promise<JlptVocabWord[]> {
+export async function fetchJlptVocab(level: number, limit = 160): Promise<JlptVocabWord[]> {
   // Prefer a stable first page; some offsets on the public API return empty arrays.
   const pages: JlptVocabWord[] = [];
   const pageSize = Math.min(limit, 50);
-  for (const offset of [0, pageSize, pageSize * 2]) {
+  for (const offset of [0, pageSize, pageSize * 2, pageSize * 3, pageSize * 4]) {
     if (pages.length >= limit) break;
     const url = `${JLPT_VOCAB_API}?level=${level}&limit=${pageSize}&offset=${offset}`;
     const response = await fetch(url, { cache: "no-store" });
@@ -192,8 +192,8 @@ export async function fetchOpenJlptQuestions(
   const questions: BankEntry[] = [];
 
   try {
-    const words = await fetchJlptVocab(level, 60);
-    questions.push(...vocabToQuestions(words, 50));
+    const words = await fetchJlptVocab(level, 160);
+    questions.push(...vocabToQuestions(words, 120));
     sources.push("jlpt-vocab-api.vercel.app (open JLPT vocabulary)");
   } catch (error) {
     console.warn("JLPT vocab fetch failed", error);
@@ -202,7 +202,7 @@ export async function fetchOpenJlptQuestions(
   try {
     const grammar = await fetchJlptGrammar(Math.min(level, 5));
     if (grammar.length > 0) {
-      questions.push(...grammarToQuestions(grammar, 15));
+      questions.push(...grammarToQuestions(grammar, 40));
       sources.push("jlpt-grammar-api.vercel.app (open JLPT grammar)");
     }
   } catch (error) {

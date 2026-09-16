@@ -5,23 +5,23 @@ import {
   SKILL_SECTION_MAP,
   type PracticeSkill,
 } from "./catalog";
-import { createQuestion } from "./question-bank";
+import { createRandomQuestions } from "./question-bank";
 import type { ExamCategory, ExamPaper, Question } from "./types";
 
 function pickQuestions(
   examType: ExamCategory,
   sectionId: string,
   count: number,
+  kind: "mock" | "practice",
 ): Question[] {
-  const stamp = Date.now();
-  return Array.from({ length: count }, (_, index) => {
-    const question = createQuestion(examType, sectionId, index, 2025, "mock");
-    return {
-      ...question,
-      id: `mock-${examType}-${sectionId}-${stamp}-${index + 1}`,
-      prompt: question.prompt.replace(/^\[\d+\/\w+\]/, "[模拟题]"),
-    };
-  });
+  const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return createRandomQuestions(
+    examType,
+    sectionId,
+    count,
+    `${kind}-${examType}-${sectionId}-${stamp}`,
+    kind === "mock" ? "[模拟题] " : "[专项] ",
+  );
 }
 
 export function generateMockPaper(
@@ -44,7 +44,7 @@ export function generateMockPaper(
     createdAt: now.toISOString(),
     sections: sections.map((section) => ({
       ...section,
-      questions: pickQuestions(examType, section.id, perSection),
+      questions: pickQuestions(examType, section.id, perSection, "mock"),
     })),
   };
 }
@@ -52,7 +52,7 @@ export function generateMockPaper(
 export function generatePracticePaper(
   examType: ExamCategory,
   skill: PracticeSkill,
-  questionCount = 10,
+  questionCount = 12,
 ): ExamPaper {
   const sectionIds = SKILL_SECTION_MAP[skill];
   const templates = SECTION_TEMPLATES[examType].filter((section) =>
@@ -70,7 +70,7 @@ export function generatePracticePaper(
         ];
 
   const perSection = Math.max(
-    3,
+    4,
     Math.ceil(questionCount / Math.max(sections.length, 1)),
   );
   const now = new Date();
@@ -88,7 +88,7 @@ export function generatePracticePaper(
     sections: sections.map((section) => ({
       ...section,
       name: PRACTICE_SKILL_LABELS[skill],
-      questions: pickQuestions(examType, section.id, perSection),
+      questions: pickQuestions(examType, section.id, perSection, "practice"),
     })),
   };
 }

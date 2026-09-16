@@ -1,7 +1,25 @@
-import type { ExamCategory, Question } from "./types";
+import {
+  buildExpandedEnglishBank,
+  buildExpandedJapaneseBank,
+} from "./bank-expand";
 import type { BankEntry } from "./providers";
+import type { ExamCategory, Question, QuestionType } from "./types";
 
 export type { BankEntry };
+
+function shuffle<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function withShuffledOptions(entry: BankEntry): BankEntry {
+  if (!entry.options?.length) return entry;
+  return { ...entry, options: shuffle(entry.options) };
+}
 
 const ENGLISH_BANK: BankEntry[] = [
   {
@@ -572,6 +590,9 @@ const JAPANESE_BANK: Record<string, BankEntry[]> = {
   ],
 };
 
+const EXPANDED_ENGLISH = buildExpandedEnglishBank();
+const EXPANDED_JAPANESE = buildExpandedJapaneseBank();
+
 /** Runtime-enriched questions fetched from open APIs (filled by enrich pipeline). */
 let enrichedBank: Partial<Record<ExamCategory, BankEntry[]>> = {};
 
@@ -592,9 +613,12 @@ function jlptLevel(examType: ExamCategory): string {
 
 export function getLocalQuestionBank(examType: ExamCategory): BankEntry[] {
   if (examType.startsWith("jlpt-")) {
-    return JAPANESE_BANK[jlptLevel(examType)] ?? JAPANESE_BANK.n5;
+    const level = jlptLevel(examType);
+    const base = JAPANESE_BANK[level] ?? JAPANESE_BANK.n5;
+    const extra = EXPANDED_JAPANESE[level] ?? [];
+    return [...base, ...extra];
   }
-  return ENGLISH_BANK;
+  return [...ENGLISH_BANK, ...EXPANDED_ENGLISH];
 }
 
 export function getQuestionBank(examType: ExamCategory): BankEntry[] {
@@ -604,35 +628,78 @@ export function getQuestionBank(examType: ExamCategory): BankEntry[] {
   return [...remote, ...local];
 }
 
-function pickListeningTemplate(
+function isListeningEntry(item: BankEntry): boolean {
+  return item.type === "listening" || Boolean(item.audioText);
+}
+
+function defaultListeningScript(examType: ExamCategory): string {
+  return examType.startsWith("jlpt-")
+    ? "次のアナウンスを聞いてください。駅の案内放送です。三番線の電車は五分遅れです。"
+    : "Attention passengers. The express train to Central Station will depart from platform 3 in five minutes.";
+}
+
+function asListeningTemplate(
   examType: ExamCategory,
-  index: number,
+  template: BankEntry,
 ): BankEntry {
-  const bank = getQuestionBank(examType);
-  const listening = bank.filter(
-    (item) =>
-      item.type === "listening" ||
-      Boolean(item.passage && /gate|flight|meeting|attention|駅|案内|放送/i.test(item.passage)),
-  );
-  const pool = listening.length > 0 ? listening : bank;
-  const template = pool[index % pool.length];
   const isJa = examType.startsWith("jlpt-");
   const audioText =
-    template.audioText ||
-    template.passage ||
-    (isJa
-      ? "次のアナウンスを聞いてください。駅の案内放送です。三番線の電車は五分遅れです。"
-      : "Attention passengers. The express train to Central Station will depart from platform 3 in five minutes.");
+    template.audioText || template.passage || defaultListeningScript(examType);
 
   return {
     ...template,
     type: "listening",
     audioText,
     audioLang: isJa ? "ja-JP" : "en-US",
-    passage: template.passage,
+    passage: template.passage ?? audioText,
   };
 }
 
+function poolForSection(
+  examType: ExamCategory,
+  sectionId: string,
+): BankEntry[] {
+  const bank = getQuestionBank(examType);
+  if (sectionId === "listening") {
+    const listening = bank.filter(isListeningEntry);
+    return listening.length > 0 ? listening : bank;
+  }
+
+  // Prefer non-listening items for reading / vocab / grammar / etc.
+  const nonListening = bank.filter((item) => !isListeningEntry(item));
+  return nonListening.length > 0 ? nonListening : bank;
+}
+
+function pickListeningTemplate(
+  examType: ExamCategory,
+  index: number,
+): BankEntry {
+  const pool = poolForSection(examType, "listening");
+  return asListeningTemplate(examType, pool[index % pool.length]);
+}
+
+function toQuestion(
+  template: BankEntry,
+  examType: ExamCategory,
+  sectionId: string,
+  id: string,
+  promptPrefix: string,
+): Question {
+  const isListening = sectionId === "listening";
+  const normalized = isListening
+    ? asListeningTemplate(examType, template)
+    : withShuffledOptions(template);
+  const type: QuestionType = isListening ? "listening" : normalized.type;
+
+  return {
+    ...normalized,
+    id,
+    prompt: `${promptPrefix}${normalized.prompt}`,
+    type,
+  };
+}
+
+/** Deterministic pick for official seed papers (stable across reloads). */
 export function createQuestion(
   examType: ExamCategory,
   sectionId: string,
@@ -641,16 +708,48 @@ export function createQuestion(
   session: string,
 ): Question {
   const isListening = sectionId === "listening";
+  const pool = poolForSection(examType, sectionId);
   const template = isListening
     ? pickListeningTemplate(examType, index)
-    : getQuestionBank(examType)[index % getQuestionBank(examType).length];
+    : pool[index % pool.length];
 
-  return {
-    ...template,
-    id: `${examType}-${year}-${session}-${sectionId}-q${index + 1}`,
-    prompt: `[${year}/${session}] ${template.prompt}`,
-    type: isListening ? "listening" : template.type,
-  };
+  return toQuestion(
+    template,
+    examType,
+    sectionId,
+    `${examType}-${year}-${session}-${sectionId}-q${index + 1}`,
+    `[${year}/${session}] `,
+  );
+}
+
+/**
+ * Random sample without immediate repeats when the bank is large enough.
+ * Used by 专项练习 / 模拟组卷 so each entry yields a fresh set.
+ */
+export function createRandomQuestions(
+  examType: ExamCategory,
+  sectionId: string,
+  count: number,
+  idPrefix: string,
+  promptPrefix = "[练习] ",
+): Question[] {
+  const pool = poolForSection(examType, sectionId);
+  if (pool.length === 0) return [];
+
+  const picked: BankEntry[] = [];
+  while (picked.length < count) {
+    picked.push(...shuffle(pool));
+  }
+
+  return picked.slice(0, count).map((template, index) =>
+    toQuestion(
+      withShuffledOptions(template),
+      examType,
+      sectionId,
+      `${idPrefix}-${index + 1}`,
+      promptPrefix,
+    ),
+  );
 }
 
 export function bankSize(examType: ExamCategory): {
