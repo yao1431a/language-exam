@@ -1,8 +1,8 @@
 "use client";
 
 import type { ExamPaper, Question } from "@/lib/exams/types";
+import { AudioPlayer } from "@/components/AudioPlayer";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 
 interface QuestionViewerProps {
   paper: ExamPaper;
@@ -17,6 +17,14 @@ function getAllQuestions(paper: ExamPaper): Question[] {
   return paper.sections.flatMap((section) => section.questions);
 }
 
+function isListeningQuestion(question: Question, sectionId?: string): boolean {
+  return (
+    question.type === "listening" ||
+    sectionId === "listening" ||
+    Boolean(question.audioText)
+  );
+}
+
 export function QuestionViewer({
   paper,
   answers,
@@ -27,17 +35,21 @@ export function QuestionViewer({
 }: QuestionViewerProps) {
   const questions = getAllQuestions(paper);
   const question = questions[currentIndex];
-  const sectionName =
-    paper.sections.find((section) =>
-      section.questions.some((item) => item.id === question.id),
-    )?.name ?? "题目";
+  const section = paper.sections.find((item) =>
+    item.questions.some((q) => q.id === question.id),
+  );
+  const listening = isListeningQuestion(question, section?.id);
+  const audioText =
+    question.audioText ||
+    question.passage ||
+    "Please listen carefully to the following announcement.";
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-slate-500">{sectionName}</p>
-          <h2 className="text-xl font-semibold text-slate-900">
+          <p className="text-sm text-[color:var(--muted)]">{section?.name ?? "题目"}</p>
+          <h2 className="font-[family-name:var(--font-display)] text-2xl text-[color:var(--ink)]">
             第 {currentIndex + 1} / {questions.length} 题
           </h2>
         </div>
@@ -46,13 +58,35 @@ export function QuestionViewer({
         </Button>
       </div>
 
-      <Card>
-        {question.passage && (
-          <div className="mb-4 rounded-xl bg-slate-50 p-4 text-sm leading-7 text-slate-700">
+      <div className="rounded-3xl border border-[color:var(--line)] bg-white/90 p-5 shadow-sm sm:p-6">
+        {listening && (
+          <div className="mb-5">
+            <AudioPlayer
+              text={audioText}
+              lang={question.audioLang || (paper.examType.startsWith("jlpt-") ? "ja-JP" : "en-US")}
+              label="听力播放"
+            />
+            <p className="mt-3 text-xs text-[color:var(--muted)]">
+              先听音频再作答。需要时可展开文本核对。
+            </p>
+            <details className="mt-3">
+              <summary className="cursor-pointer text-sm text-[color:var(--accent)]">
+                查看听力文本
+              </summary>
+              <div className="mt-2 rounded-xl bg-[color:var(--panel)] p-4 text-sm leading-7 text-[color:var(--ink)]">
+                {audioText}
+              </div>
+            </details>
+          </div>
+        )}
+
+        {!listening && question.passage && (
+          <div className="mb-4 rounded-xl bg-[color:var(--panel)] p-4 text-sm leading-7 text-[color:var(--ink)]">
             {question.passage}
           </div>
         )}
-        <p className="text-base leading-7 text-slate-900">{question.prompt}</p>
+
+        <p className="text-base leading-7 text-[color:var(--ink)]">{question.prompt}</p>
 
         <div className="mt-6 space-y-3">
           {(question.options ?? []).map((option) => {
@@ -64,8 +98,8 @@ export function QuestionViewer({
                 onClick={() => onAnswer(question.id, option)}
                 className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition ${
                   selected
-                    ? "border-indigo-500 bg-indigo-50 text-indigo-900"
-                    : "border-slate-200 bg-white hover:border-slate-300"
+                    ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--ink)]"
+                    : "border-[color:var(--line)] bg-white hover:border-[color:var(--accent)]"
                 }`}
               >
                 {option}
@@ -73,7 +107,7 @@ export function QuestionViewer({
             );
           })}
         </div>
-      </Card>
+      </div>
 
       <div className="flex items-center justify-between">
         <Button

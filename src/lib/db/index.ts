@@ -2,7 +2,7 @@ import Dexie, { type EntityTable } from "dexie";
 import type { ExamAttempt, ExamMeta, ExamPaper } from "@/lib/exams/types";
 import { buildAllSeedPapers } from "@/lib/exams/seed";
 
-const CURRENT_SEED_VERSION = "2";
+const CURRENT_SEED_VERSION = "3";
 
 class LanguageExamDB extends Dexie {
   papers!: EntityTable<ExamPaper, "id">;

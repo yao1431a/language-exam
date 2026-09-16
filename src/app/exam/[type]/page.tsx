@@ -3,15 +3,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { EXAM_LABELS } from "@/lib/exams/constants";
+import {
+  EXAM_LABELS,
+  getExamByCategory,
+} from "@/lib/exams/catalog";
 import { listPapersByType } from "@/lib/db";
 import type { ExamCategory, ExamPaper } from "@/lib/exams/types";
 
-export default function ExamListPage() {
+export default function ExamHubPage() {
   const params = useParams<{ type: string }>();
   const examType = params.type as ExamCategory;
+  const context = getExamByCategory(examType);
   const [papers, setPapers] = useState<ExamPaper[]>([]);
 
   useEffect(() => {
@@ -20,66 +24,120 @@ export default function ExamListPage() {
 
   const official = papers.filter((paper) => paper.isOfficial && !paper.isMock);
   const mock = papers.filter((paper) => paper.isMock);
-  const downloaded = papers.filter((paper) => paper.downloadedAt);
+  const label = EXAM_LABELS[examType] ?? examType;
+  const language = context?.language;
+  const exam = context?.exam;
+  const skills = exam?.skills ?? [];
 
   return (
-    <div className="mx-auto min-h-screen max-w-4xl px-4 py-8 sm:px-6">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <Link href="/" className="text-sm text-indigo-600 hover:underline">
-            ← 返回首页
-          </Link>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">
-            {EXAM_LABELS[examType]}
-          </h1>
-          <p className="mt-2 text-slate-600">
-            共 {papers.length} 套试卷，含近 5 年真题练习版
-            {downloaded.length > 0 && `，已下载最新 ${downloaded.length} 套`}
+    <div className="min-h-screen">
+      <SiteHeader
+        crumb={[
+          { href: "/", label: "首页" },
+          ...(language
+            ? [{ href: `/lang/${language.id}`, label: language.name }]
+            : []),
+          { href: `/exam/${examType}`, label },
+        ]}
+      />
+
+      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+        <h1 className="font-[family-name:var(--font-display)] text-4xl text-[color:var(--ink)]">
+          {label}
+        </h1>
+        <p className="mt-3 text-[color:var(--muted)]">
+          选择练习方式：完整试卷、专项突破，或一键生成模拟卷。
+        </p>
+
+        <section className="mt-10">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl">
+            专项练习
+          </h2>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">
+            按题型单独训练，适合查漏补缺。
           </p>
-        </div>
-        <Link href={`/mock?type=${examType}`}>
-          <Button variant="secondary">生成模拟卷</Button>
-        </Link>
-      </div>
-
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">真题练习版</h2>
-        {official.map((paper) => (
-          <Card key={paper.id}>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="font-medium text-slate-900">{paper.title}</h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  {paper.year} 年 · 场次 {paper.session}
-                  {paper.downloadedAt && " · 已同步最新版"}
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {skills.map((skill) => (
+              <Link
+                key={skill.id}
+                href={`/exam/${examType}/practice/${skill.id}`}
+                className="rounded-2xl border border-[color:var(--line)] bg-white/85 p-5 transition hover:border-[color:var(--accent)]"
+              >
+                <h3 className="text-lg font-semibold">{skill.label}</h3>
+                <p className="mt-2 text-sm text-[color:var(--muted)]">
+                  {skill.description}
                 </p>
-              </div>
-              <Link href={`/exam/${examType}/${paper.id}`}>
-                <Button>开始考试</Button>
+                <p className="mt-4 text-sm text-[color:var(--accent)]">开始专项 →</p>
               </Link>
-            </div>
-          </Card>
-        ))}
-      </section>
+            ))}
+          </div>
+        </section>
 
-      {mock.length > 0 && (
-        <section className="mt-10 space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900">模拟试卷</h2>
-          {mock.map((paper) => (
-            <Card key={paper.id}>
-              <div className="flex flex-wrap items-center justify-between gap-3">
+        <section className="mt-12">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-[family-name:var(--font-display)] text-2xl">
+                完整试卷
+              </h2>
+              <p className="mt-2 text-sm text-[color:var(--muted)]">
+                近 5 年练习卷，共 {official.length} 套
+              </p>
+            </div>
+            <Link href={`/mock?type=${examType}`}>
+              <Button variant="secondary">生成模拟卷</Button>
+            </Link>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {official.slice(0, 12).map((paper) => (
+              <div
+                key={paper.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--line)] bg-white/85 px-5 py-4"
+              >
                 <div>
-                  <h3 className="font-medium text-slate-900">{paper.title}</h3>
-                  <p className="mt-1 text-sm text-slate-500">自动生成</p>
+                  <h3 className="font-medium">{paper.title}</h3>
+                  <p className="mt-1 text-sm text-[color:var(--muted)]">
+                    {paper.year} · 场次 {paper.session}
+                    {paper.downloadedAt ? " · 已同步" : ""}
+                  </p>
                 </div>
                 <Link href={`/exam/${examType}/${paper.id}`}>
-                  <Button variant="secondary">继续练习</Button>
+                  <Button>开始考试</Button>
                 </Link>
               </div>
-            </Card>
-          ))}
+            ))}
+            {official.length === 0 && (
+              <p className="rounded-2xl border border-dashed border-[color:var(--line)] px-5 py-8 text-center text-sm text-[color:var(--muted)]">
+                本地暂无试卷，请返回首页联网同步后重试。
+              </p>
+            )}
+          </div>
         </section>
-      )}
+
+        {mock.length > 0 && (
+          <section className="mt-12">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl">
+              我的模拟 / 专项卷
+            </h2>
+            <div className="mt-5 space-y-3">
+              {mock.slice(0, 8).map((paper) => (
+                <div
+                  key={paper.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--line)] bg-white/85 px-5 py-4"
+                >
+                  <div>
+                    <h3 className="font-medium">{paper.title}</h3>
+                    <p className="mt-1 text-sm text-[color:var(--muted)]">本地生成</p>
+                  </div>
+                  <Link href={`/exam/${examType}/${paper.id}`}>
+                    <Button variant="secondary">继续练习</Button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
     </div>
   );
 }

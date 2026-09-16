@@ -5,31 +5,64 @@ export type { BankEntry };
 
 const ENGLISH_BANK: BankEntry[] = [
   {
+    type: "listening",
+    prompt: "According to the announcement, which gate has changed?",
+    passage:
+      "Attention passengers: Flight 482 to Singapore will now depart from Gate 27 instead of Gate 14.",
+    audioText:
+      "Attention passengers: Flight 482 to Singapore will now depart from Gate 27 instead of Gate 14.",
+    audioLang: "en-US",
+    options: ["Gate 14", "Gate 27", "Gate 41", "Gate 9"],
+    correctAnswer: "Gate 27",
+  },
+  {
+    type: "listening",
+    prompt: "What should early arrivals do first?",
+    passage:
+      "If you arrive early, go to the registration desk on the second floor. Workshops start at 10 a.m. sharp.",
+    audioText:
+      "If you arrive early, go to the registration desk on the second floor. Workshops start at 10 a.m. sharp.",
+    audioLang: "en-US",
+    options: [
+      "Register on the second floor before workshops",
+      "Start the workshop at 9 a.m.",
+      "Skip registration if early",
+      "Go to the third floor",
+    ],
+    correctAnswer: "Register on the second floor before workshops",
+  },
+  {
+    type: "listening",
+    prompt: "What time does the meeting start?",
+    passage: "Please join us in Conference Room B at a quarter past three this afternoon.",
+    audioText:
+      "Please join us in Conference Room B at a quarter past three this afternoon.",
+    audioLang: "en-US",
+    options: ["3:15 p.m.", "2:45 p.m.", "3:45 p.m.", "4:15 p.m."],
+    correctAnswer: "3:15 p.m.",
+  },
+  {
+    type: "listening",
+    prompt: "What should the customer do next?",
+    passage:
+      "Your order has shipped. Track it with code X R 441. Contact support only if delivery exceeds five business days.",
+    audioText:
+      "Your order has shipped. Track it with code X R 441. Contact support only if delivery exceeds five business days.",
+    audioLang: "en-US",
+    options: [
+      "Track the package with XR-441",
+      "Call support immediately",
+      "Cancel the order",
+      "Ignore the tracking code",
+    ],
+    correctAnswer: "Track the package with XR-441",
+  },
+  {
     type: "single",
     prompt: "Choose the word that best completes the sentence: The manager asked the team to submit their reports ___ Friday.",
     options: ["by", "until", "since", "during"],
     correctAnswer: "by",
     explanation: "'By Friday' indicates a deadline.",
-  },
-  {
-    type: "single",
-    prompt: "What is the main idea of the passage about remote work?",
-    passage:
-      "Companies worldwide have adopted hybrid schedules, balancing office collaboration with home flexibility. Surveys show productivity often rises when employees control their environment.",
-    options: [
-      "Remote work eliminates all office costs",
-      "Hybrid models blend flexibility with collaboration",
-      "Employees dislike working from home",
-      "Productivity always decreases remotely",
-    ],
-    correctAnswer: "Hybrid models blend flexibility with collaboration",
-  },
-  {
-    type: "single",
-    prompt: "Listen to the announcement: Which gate has changed?",
-    passage: "Attention passengers: Flight 482 to Singapore will now depart from Gate 27 instead of Gate 14.",
-    options: ["Gate 14", "Gate 27", "Gate 41", "Gate 9"],
-    correctAnswer: "Gate 27",
   },
   {
     type: "single",
@@ -259,6 +292,22 @@ const ENGLISH_BANK: BankEntry[] = [
 const JAPANESE_BANK: Record<string, BankEntry[]> = {
   n1: [
     {
+      type: "listening",
+      prompt: "アナウンスの内容として正しいものはどれですか。",
+      passage:
+        "本日の講演会は会場の都合により、開始時刻を午後一時三十分に変更いたしました。受付は一階ロビーで行います。",
+      audioText:
+        "本日の講演会は会場の都合により、開始時刻を午後一時三十分に変更いたしました。受付は一階ロビーで行います。",
+      audioLang: "ja-JP",
+      options: [
+        "開始は午後一時半、受付は一階",
+        "開始は午前十時、受付は二階",
+        "講演会は中止",
+        "受付のみ変更",
+      ],
+      correctAnswer: "開始は午後一時半、受付は一階",
+    },
+    {
       type: "single",
       prompt: "次の文の（　）に入る最も適切な語を選びなさい：彼の説明は非常に（　）で、聴衆を完全に納得させた。",
       options: ["曖昧", "説得力がある", "単調", "軽率"],
@@ -464,6 +513,15 @@ const JAPANESE_BANK: Record<string, BankEntry[]> = {
   ],
   n5: [
     {
+      type: "listening",
+      prompt: "アナウンスによると、電車はどのくらい遅れていますか。",
+      passage: "三番線の電車は五分ほど遅れております。ご迷惑をおかけします。",
+      audioText: "三番線の電車は五分ほど遅れております。ご迷惑をおかけします。",
+      audioLang: "ja-JP",
+      options: ["三分", "五分", "十分", "遅れなし"],
+      correctAnswer: "五分",
+    },
+    {
       type: "single",
       prompt: "「水」の読み方は？",
       options: ["みず", "かわ", "うみ", "あめ"],
@@ -546,6 +604,35 @@ export function getQuestionBank(examType: ExamCategory): BankEntry[] {
   return [...remote, ...local];
 }
 
+function pickListeningTemplate(
+  examType: ExamCategory,
+  index: number,
+): BankEntry {
+  const bank = getQuestionBank(examType);
+  const listening = bank.filter(
+    (item) =>
+      item.type === "listening" ||
+      Boolean(item.passage && /gate|flight|meeting|attention|駅|案内|放送/i.test(item.passage)),
+  );
+  const pool = listening.length > 0 ? listening : bank;
+  const template = pool[index % pool.length];
+  const isJa = examType.startsWith("jlpt-");
+  const audioText =
+    template.audioText ||
+    template.passage ||
+    (isJa
+      ? "次のアナウンスを聞いてください。駅の案内放送です。三番線の電車は五分遅れです。"
+      : "Attention passengers. The express train to Central Station will depart from platform 3 in five minutes.");
+
+  return {
+    ...template,
+    type: "listening",
+    audioText,
+    audioLang: isJa ? "ja-JP" : "en-US",
+    passage: template.passage,
+  };
+}
+
 export function createQuestion(
   examType: ExamCategory,
   sectionId: string,
@@ -553,12 +640,16 @@ export function createQuestion(
   year: number,
   session: string,
 ): Question {
-  const bank = getQuestionBank(examType);
-  const template = bank[index % bank.length];
+  const isListening = sectionId === "listening";
+  const template = isListening
+    ? pickListeningTemplate(examType, index)
+    : getQuestionBank(examType)[index % getQuestionBank(examType).length];
+
   return {
     ...template,
     id: `${examType}-${year}-${session}-${sectionId}-q${index + 1}`,
     prompt: `[${year}/${session}] ${template.prompt}`,
+    type: isListening ? "listening" : template.type,
   };
 }
 

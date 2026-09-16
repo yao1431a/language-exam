@@ -15,6 +15,10 @@ export interface Question {
   type: QuestionType;
   prompt: string;
   passage?: string;
+  /** Spoken script for listening items (TTS / audio) */
+  audioText?: string;
+  /** BCP-47 language for speech synthesis */
+  audioLang?: string;
   options?: string[];
   correctAnswer: string | string[];
   explanation?: string;

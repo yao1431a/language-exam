@@ -5,11 +5,11 @@ type ButtonSize = "sm" | "md" | "lg";
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-indigo-600 text-white hover:bg-indigo-500 disabled:bg-indigo-300",
+    "bg-[color:var(--accent)] text-white hover:brightness-110 disabled:opacity-50",
   secondary:
-    "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50",
-  ghost: "bg-transparent text-slate-700 hover:bg-slate-100",
-  danger: "bg-rose-600 text-white hover:bg-rose-500",
+    "bg-white text-[color:var(--ink)] border border-[color:var(--line)] hover:bg-[color:var(--panel)]",
+  ghost: "bg-transparent text-[color:var(--ink)] hover:bg-black/5",
+  danger: "bg-rose-700 text-white hover:bg-rose-600",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -27,7 +27,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = "", variant = "primary", size = "md", ...props }, ref) => (
     <button
       ref={ref}
-      className={`inline-flex items-center justify-center rounded-lg font-medium transition-colors disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-xl font-medium transition disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       {...props}
     />
   ),

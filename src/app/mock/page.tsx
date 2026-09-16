@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { EXAM_GROUPS, EXAM_LABELS } from "@/lib/exams/constants";
 import { upsertPaper } from "@/lib/db";
 import { generateMockPaper } from "@/lib/exams/generator";
@@ -50,67 +50,78 @@ export default function MockPage() {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-3xl px-4 py-8 sm:px-6">
-      <Link href="/" className="text-sm text-indigo-600 hover:underline">
-        ← 返回首页
-      </Link>
-      <h1 className="mt-2 text-3xl font-bold text-slate-900">生成模拟试卷</h1>
-      <p className="mt-2 text-slate-600">
-        根据题库随机抽题组卷。联网时通过服务端生成，离线时在本地浏览器完成。
-      </p>
+    <div className="min-h-screen">
+      <SiteHeader
+        crumb={[
+          { href: "/", label: "首页" },
+          { href: "/mock", label: "模拟组卷" },
+        ]}
+      />
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+        <Link
+          href={`/exam/${examType}`}
+          className="text-sm text-[color:var(--accent)] hover:underline"
+        >
+          ← 返回考试主页
+        </Link>
+        <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl">
+          生成模拟试卷
+        </h1>
+        <p className="mt-2 text-[color:var(--muted)]">
+          随机抽题组卷。联网走服务端，离线在浏览器本地完成。
+        </p>
 
-      <Card className="mt-8 space-y-6">
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
-            考试类型
-          </label>
-          <select
-            value={examType}
-            onChange={(event) => setExamType(event.target.value as ExamCategory)}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-          >
-            {EXAM_GROUPS.flatMap((group) =>
-              group.types.map((type) => (
-                <option key={type} value={type}>
-                  {EXAM_LABELS[type]}
-                </option>
-              )),
-            )}
-          </select>
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
-            题目数量（约）
-          </label>
-          <input
-            type="number"
-            min={5}
-            max={40}
-            value={questionCount}
-            onChange={(event) => setQuestionCount(Number(event.target.value))}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-          />
-        </div>
-
-        <Button size="lg" disabled={loading} onClick={handleGenerate}>
-          {loading ? "生成中..." : "立即生成"}
-        </Button>
-      </Card>
-
-      {generated && (
-        <Card className="mt-6">
-          <h2 className="text-lg font-semibold text-slate-900">{generated.title}</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            共 {generated.sections.reduce((sum, s) => sum + s.questions.length, 0)} 题，已保存到本地
-          </p>
-          <div className="mt-4">
-            <Link href={`/exam/${generated.examType}/${generated.id}`}>
-              <Button>开始考试</Button>
-            </Link>
+        <div className="mt-8 space-y-6 rounded-3xl border border-[color:var(--line)] bg-white/90 p-6">
+          <div>
+            <label className="mb-2 block text-sm font-medium">考试类型</label>
+            <select
+              value={examType}
+              onChange={(event) => setExamType(event.target.value as ExamCategory)}
+              className="w-full rounded-xl border border-[color:var(--line)] px-4 py-3 text-sm"
+            >
+              {EXAM_GROUPS.flatMap((group) =>
+                group.types.map((type) => (
+                  <option key={type} value={type}>
+                    {EXAM_LABELS[type]}
+                  </option>
+                )),
+              )}
+            </select>
           </div>
-        </Card>
-      )}
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">题目数量（约）</label>
+            <input
+              type="number"
+              min={5}
+              max={40}
+              value={questionCount}
+              onChange={(event) => setQuestionCount(Number(event.target.value))}
+              className="w-full rounded-xl border border-[color:var(--line)] px-4 py-3 text-sm"
+            />
+          </div>
+
+          <Button size="lg" disabled={loading} onClick={handleGenerate}>
+            {loading ? "生成中..." : "立即生成"}
+          </Button>
+        </div>
+
+        {generated && (
+          <div className="mt-6 rounded-3xl border border-[color:var(--line)] bg-white/90 p-6">
+            <h2 className="text-lg font-semibold">{generated.title}</h2>
+            <p className="mt-2 text-sm text-[color:var(--muted)]">
+              共{" "}
+              {generated.sections.reduce((sum, s) => sum + s.questions.length, 0)}{" "}
+              题，已保存到本地
+            </p>
+            <div className="mt-4">
+              <Link href={`/exam/${generated.examType}/${generated.id}`}>
+                <Button>开始考试</Button>
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

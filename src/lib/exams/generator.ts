@@ -1,30 +1,27 @@
-import { EXAM_LABELS, SECTION_TEMPLATES } from "./constants";
-import { getQuestionBank } from "./question-bank";
+import {
+  EXAM_LABELS,
+  PRACTICE_SKILL_LABELS,
+  SECTION_TEMPLATES,
+  SKILL_SECTION_MAP,
+  type PracticeSkill,
+} from "./catalog";
+import { createQuestion } from "./question-bank";
 import type { ExamCategory, ExamPaper, Question } from "./types";
-
-function shuffle<T>(items: T[]): T[] {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
 
 function pickQuestions(
   examType: ExamCategory,
   sectionId: string,
   count: number,
 ): Question[] {
-  const bank = getQuestionBank(examType);
-  const selected = shuffle(bank).slice(0, Math.min(count, bank.length));
   const stamp = Date.now();
-
-  return selected.map((item, index) => ({
-    ...item,
-    id: `mock-${examType}-${sectionId}-${stamp}-${index + 1}`,
-    prompt: `[模拟题] ${item.prompt}`,
-  }));
+  return Array.from({ length: count }, (_, index) => {
+    const question = createQuestion(examType, sectionId, index, 2025, "mock");
+    return {
+      ...question,
+      id: `mock-${examType}-${sectionId}-${stamp}-${index + 1}`,
+      prompt: question.prompt.replace(/^\[\d+\/\w+\]/, "[模拟题]"),
+    };
+  });
 }
 
 export function generateMockPaper(
@@ -47,6 +44,50 @@ export function generateMockPaper(
     createdAt: now.toISOString(),
     sections: sections.map((section) => ({
       ...section,
+      questions: pickQuestions(examType, section.id, perSection),
+    })),
+  };
+}
+
+export function generatePracticePaper(
+  examType: ExamCategory,
+  skill: PracticeSkill,
+  questionCount = 10,
+): ExamPaper {
+  const sectionIds = SKILL_SECTION_MAP[skill];
+  const templates = SECTION_TEMPLATES[examType].filter((section) =>
+    sectionIds.includes(section.id),
+  );
+  const sections =
+    templates.length > 0
+      ? templates
+      : [
+          {
+            id: skill,
+            name: PRACTICE_SKILL_LABELS[skill],
+            durationMinutes: 20,
+          },
+        ];
+
+  const perSection = Math.max(
+    3,
+    Math.ceil(questionCount / Math.max(sections.length, 1)),
+  );
+  const now = new Date();
+
+  return {
+    id: `practice-${examType}-${skill}-${now.getTime()}`,
+    examType,
+    title: `${EXAM_LABELS[examType]} · ${PRACTICE_SKILL_LABELS[skill]}专项`,
+    year: now.getFullYear(),
+    session: String(now.getMonth() + 1).padStart(2, "0"),
+    isOfficial: false,
+    isMock: true,
+    version: 1,
+    createdAt: now.toISOString(),
+    sections: sections.map((section) => ({
+      ...section,
+      name: PRACTICE_SKILL_LABELS[skill],
       questions: pickQuestions(examType, section.id, perSection),
     })),
   };
