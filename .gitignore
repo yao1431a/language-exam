@@ -21,6 +21,7 @@
 /build
 
 # misc
+/agent-tools/
 .DS_Store
 *.pem
 

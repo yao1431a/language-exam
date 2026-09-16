@@ -2,6 +2,8 @@ import Dexie, { type EntityTable } from "dexie";
 import type { ExamAttempt, ExamMeta, ExamPaper } from "@/lib/exams/types";
 import { buildAllSeedPapers } from "@/lib/exams/seed";
 
+const CURRENT_SEED_VERSION = "2";
+
 class LanguageExamDB extends Dexie {
   papers!: EntityTable<ExamPaper, "id">;
   meta!: EntityTable<ExamMeta, "id">;
@@ -41,14 +43,25 @@ function toMeta(paper: ExamPaper): ExamMeta {
 }
 
 export async function ensureSeedData(): Promise<number> {
+  const seedVersion = (await db.settings.get("seedVersion"))?.value;
   const count = await db.papers.count();
-  if (count > 0) return count;
+
+  if (count > 0 && seedVersion === CURRENT_SEED_VERSION) {
+    return count;
+  }
 
   const papers = buildAllSeedPapers();
-  await db.transaction("rw", db.papers, db.meta, async () => {
-    await db.papers.bulkPut(papers);
-    await db.meta.bulkPut(papers.map(toMeta));
-    await db.settings.put({ key: "seedVersion", value: "1" });
+  await db.transaction("rw", db.papers, db.meta, db.settings, async () => {
+    // Keep user mock papers / downloaded open-api papers; refresh seed catalog
+    const existing = await db.papers.toArray();
+    const keep = existing.filter(
+      (paper) => paper.isMock || paper.id.includes("open-api"),
+    );
+    await db.papers.clear();
+    await db.meta.clear();
+    await db.papers.bulkPut([...papers, ...keep]);
+    await db.meta.bulkPut([...papers, ...keep].map(toMeta));
+    await db.settings.put({ key: "seedVersion", value: CURRENT_SEED_VERSION });
     await db.settings.put({
       key: "seededAt",
       value: new Date().toISOString(),

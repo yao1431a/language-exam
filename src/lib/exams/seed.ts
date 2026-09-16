@@ -2,7 +2,7 @@ import { EXAM_LABELS, SECTION_TEMPLATES, SESSIONS_BY_EXAM, YEARS } from "./const
 import { createQuestion } from "./question-bank";
 import type { ExamCategory, ExamPaper } from "./types";
 
-const QUESTIONS_PER_SECTION = 5;
+const QUESTIONS_PER_SECTION = 10;
 
 export function buildOfficialPaper(
   examType: ExamCategory,

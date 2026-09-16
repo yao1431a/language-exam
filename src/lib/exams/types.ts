@@ -58,6 +58,8 @@ export interface SyncPayload {
   latestPapers: ExamPaper[];
   serverTime: string;
   catalogVersion: number;
+  attribution?: string[];
+  bankStats?: Record<string, { local: number; enriched: number; total: number }>;
 }
 
 export interface MockGenerateRequest {
