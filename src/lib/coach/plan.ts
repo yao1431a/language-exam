@@ -17,7 +17,7 @@ export function buildDailyTasks(mode: SessionMode): DailyPlanTask[] {
     {
       id: "speak",
       type: "speak",
-      title: "口语训练 + AI 反馈",
+      title: "口语训练 + 教练反馈",
       href: "/speak",
       done: false,
       meta:

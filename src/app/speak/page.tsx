@@ -73,6 +73,10 @@ function SpeakPageInner() {
   const [seconds, setSeconds] = useState(0);
   const [prepLeft, setPrepLeft] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<SpeakCoachFeedback | null>(null);
+  const [coachMeta, setCoachMeta] = useState<{
+    provider: string;
+    modelId: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
   const [listening, setListening] = useState(false);
@@ -90,6 +94,7 @@ function SpeakPageInner() {
     setPartFilter(nextPart === "any" ? item.part : nextPart);
     setTranscript("");
     setFeedback(null);
+    setCoachMeta(null);
     setError(undefined);
     setSeconds(0);
     setPrepLeft(null);
@@ -147,7 +152,7 @@ function SpeakPageInner() {
       setRecording(true);
       startTimer();
     } catch {
-      setError("无法访问麦克风，请检查权限；仍可手打稿请 AI 点评。");
+      setError("无法访问麦克风，请检查权限；仍可手打稿请教练点评。");
     }
   }
 
@@ -223,12 +228,18 @@ function SpeakPageInner() {
       const data = (await response.json()) as {
         error?: string;
         feedback?: SpeakCoachFeedback;
+        provider?: string;
+        modelId?: string;
       };
       if (!response.ok || !data.feedback) {
         throw new Error(data.error || "反馈失败");
       }
       const fb = data.feedback;
       setFeedback(fb);
+      setCoachMeta({
+        provider: data.provider ?? "local",
+        modelId: data.modelId ?? "heuristic-v1",
+      });
 
       const sessionId = uuid();
       await saveSpeakingSession({
@@ -297,8 +308,8 @@ function SpeakPageInner() {
           {shadowMode ? "跟读 / 示范音" : "口语训练"}
         </h1>
         <p className="mt-2 text-[color:var(--muted)]">
-          录音可选；至少提交文字稿才能拿 AI 反馈。Part 2 可先 1
-          分钟准备再开录。
+          录音可选；至少提交文字稿才能拿教练反馈（默认本地启发式）。Part 2
+          可先 1 分钟准备再开录。
         </p>
 
         <div className="mt-6 flex flex-wrap gap-2">
@@ -391,7 +402,7 @@ function SpeakPageInner() {
             disabled={loading || transcript.trim().length < 20}
             onClick={() => void requestCoach()}
           >
-            {loading ? "AI 点评中…" : "提交 AI 反馈"}
+            {loading ? "点评中…" : "提交教练反馈"}
           </Button>
         </div>
 
@@ -399,9 +410,17 @@ function SpeakPageInner() {
 
         {feedback && (
           <section className="mt-8 space-y-4 rounded-3xl border border-[color:var(--line)] bg-white/90 p-6">
-            <h2 className="font-[family-name:var(--font-display)] text-2xl">
-              AI 反馈
-            </h2>
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <h2 className="font-[family-name:var(--font-display)] text-2xl">
+                教练反馈
+              </h2>
+              {coachMeta && (
+                <p className="text-xs text-[color:var(--muted)]">
+                  来源：{coachMeta.provider === "local" ? "本地启发式" : "云端 AI"}{" "}
+                  · {coachMeta.modelId}
+                </p>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
               {(
                 [

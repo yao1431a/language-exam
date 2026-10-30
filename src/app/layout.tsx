@@ -6,7 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "语力馆 · Fluency Lab",
   description:
-    "系统化提升英语口语与词汇，AI 反馈助你冲刺雅思 Academic 7.0+",
+    "系统化提升英语口语与词汇，教练反馈助你冲刺雅思 Academic 7.0+",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

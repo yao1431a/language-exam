@@ -39,14 +39,14 @@ export default function NotesPage() {
           好句 / 错句本
         </h1>
         <p className="mt-2 text-[color:var(--muted)]">
-          来自 AI 反馈的升级句与高分表达，建议第二天再说一遍。
+          来自教练反馈的升级句与高分表达，建议第二天再说一遍。
         </p>
 
         <section className="mt-8 space-y-4">
           <h2 className="text-lg font-medium">待掌握（{active.length}）</h2>
           {active.length === 0 && (
             <p className="rounded-2xl border border-dashed border-[color:var(--line)] px-4 py-8 text-center text-sm text-[color:var(--muted)]">
-              还没有笔记。去口语页提交一次 AI 反馈吧。
+              还没有笔记。去口语页提交一次教练反馈吧。
             </p>
           )}
           {active.map((note) => (

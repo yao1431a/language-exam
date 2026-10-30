@@ -66,17 +66,19 @@ export default function SettingsPage() {
             设置
           </h1>
           <p className="mt-2 text-[color:var(--muted)]">
-            API Key、会话模式、迁机备份。
+            会话模式、迁机备份；云端 AI 默认关闭。
           </p>
         </div>
 
         <section className="rounded-3xl border border-[color:var(--line)] bg-white/90 p-6">
-          <h2 className="text-lg font-medium">AI 反馈</h2>
+          <h2 className="text-lg font-medium">教练反馈（本地 / 可选 AI）</h2>
           <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-            在项目根目录创建 <code className="text-[color:var(--ink)]">.env.local</code>
-            ，参考 <code className="text-[color:var(--ink)]">.env.example</code>
-            。配置 <code>ANTHROPIC_API_KEY</code> 或{" "}
-            <code>OPENAI_API_KEY</code> 后重启{" "}
+            现在默认用<strong>本地启发式点评</strong>，不必配置 Key。接口{" "}
+            <code className="text-[color:var(--ink)]">/api/coach/speak</code>{" "}
+            已保留。以后要开云端：复制{" "}
+            <code className="text-[color:var(--ink)]">.env.example</code> 为{" "}
+            <code className="text-[color:var(--ink)]">.env.local</code>，填入
+            Key，并设 <code>AI_COACH_ENABLED=1</code>，再重启{" "}
             <code>npm run dev</code>。
           </p>
           <p className="mt-3 rounded-xl bg-[color:var(--panel)] px-4 py-3 text-sm">

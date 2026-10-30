@@ -16,7 +16,7 @@
 git clone https://github.com/yao1431a/language-exam.git fluency-lab
 cd fluency-lab
 npm install
-cp .env.example .env.local   # 填入 API Key
+cp .env.example .env.local   # 可先不填 Key；默认本地点评
 npm run dev
 ```
 
@@ -25,7 +25,8 @@ npm run dev
 1. 旧机：设置页 → 导出备份 JSON  
 2. 新机：设置页 → 导入备份  
 
-数据在浏览器 IndexedDB；换浏览器需重新导入。
+数据在浏览器 IndexedDB；换浏览器需重新导入。  
+云端 AI 默认关闭；需要时再设 `AI_COACH_ENABLED=1` 与 API Key。
 
 ## GitHub
 

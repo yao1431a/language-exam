@@ -70,7 +70,8 @@ export default function TodayPlanPage() {
             今日计划：输出萎缩，就用练习把它养回来
           </h1>
           <p className="rise-in-delay mt-5 max-w-2xl text-base leading-7 text-emerald-50/90">
-            主线是口语 + 词汇唤醒 + AI 反馈。目标雅思 Academic 7.0+。旧刷题入口在「工具箱」。
+            主线是口语 + 词汇唤醒 + 教练反馈（默认本地，可选云端 AI）。目标雅思
+            Academic 7.0+。旧刷题入口在「工具箱」。
           </p>
         </div>
       </section>
@@ -150,11 +151,12 @@ export default function TodayPlanPage() {
 
         <section className="mt-12 rounded-3xl border border-[color:var(--line)] bg-white/80 p-6">
           <h3 className="font-[family-name:var(--font-display)] text-xl">
-            使用前确认
+            教练反馈说明
           </h3>
           <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-            AI 点评需要在本机配置 API Key（Anthropic 或 OpenAI）。Cursor
-            订阅用于开发本项目，不能直接给练习页调用。请到设置页查看状态。
+            当前默认<strong>不连云端 AI</strong>，口语提交后走本地启发式点评，可直接练。
+            云端接口已留好；需要时在设置里按说明打开{" "}
+            <code>AI_COACH_ENABLED</code>。
           </p>
           <div className="mt-4">
             <Link href="/settings">
