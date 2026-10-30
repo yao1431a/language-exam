@@ -1,11 +1,11 @@
 {
-  "name": "语言考试练习平台",
-  "short_name": "语言考试",
-  "description": "托业、托福、雅思、日语 JLPT 真题练习与模拟考试",
+  "name": "语力馆 Fluency Lab",
+  "short_name": "语力馆",
+  "description": "口语输出 + 词汇唤醒 + AI 反馈，冲刺雅思 7+",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#4f46e5",
+  "background_color": "#f3efe6",
+  "theme_color": "#0f6e56",
   "lang": "zh-CN",
   "icons": [
     {

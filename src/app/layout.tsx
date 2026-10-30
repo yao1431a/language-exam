@@ -1,30 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans_SC, Noto_Serif_SC } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
-const notoSans = Noto_Sans_SC({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-noto-sans",
-});
-
-const notoSerif = Noto_Serif_SC({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-display",
-});
-
 export const metadata: Metadata = {
-  title: "语测馆 · 语言水平考试练习",
+  title: "语力馆 · Fluency Lab",
   description:
-    "按语言选择官方水平考试，支持完整试卷、专项练习与模拟组卷，可离线作答",
+    "系统化提升英语口语与词汇，AI 反馈助你冲刺雅思 Academic 7.0+",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "语测馆",
+    title: "语力馆",
   },
 };
 
@@ -36,11 +23,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="zh-CN"
-      className={`${notoSans.variable} ${notoSerif.variable} h-full antialiased`}
-    >
-      <body className="min-h-full font-[family-name:var(--font-noto-sans)] text-[color:var(--ink)]">
+    <html lang="zh-CN" className="h-full antialiased">
+      <body className="min-h-full font-[family-name:var(--font-sans)] text-[color:var(--ink)]">
         <Providers>
           {children}
           <ServiceWorkerRegister />

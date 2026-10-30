@@ -13,6 +13,12 @@
   --hero-to: #1a6b55;
   --background: var(--bg);
   --foreground: var(--ink);
+  /* Local stacks — no Google Fonts fetch (offline / Mac mini friendly) */
+  --font-sans: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei",
+    ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC",
+    "Songti TC", ui-serif, Georgia, serif;
+  --font-noto-sans: var(--font-sans);
 }
 
 body {
